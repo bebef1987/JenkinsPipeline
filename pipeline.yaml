@@ -1,0 +1,88 @@
+pipeline {
+     agent any
+     stages {
+         stage('Initialize the variables') {
+             // Each stage is made up of steps
+             steps{
+                 script{
+                     PROCESS_OUTPUT_PATH = "${WORKSPACE}\\Process\\Output\\${BUILD_NUMBER}"
+                     TEST_OUTPUT_PATH = "${WORKSPACE}\\Test\\Output\\${BUILD_NUMBER}" 
+                 }
+             }               
+         }
+         stage('Checkout code') {
+             steps {
+                 // Get some code from a GitHub repository
+                 git branch: 'main',
+                 credentialsId: '8256c430-4681-428d-9199-359ec61b5327',
+                 url: 'https://github.com/SebastianBalan/JenkinsPipeline'
+             }
+         }
+         stage('Build code for Process') {
+             steps {
+                 echo 'UiPathPack'
+                 echo PROCESS_OUTPUT_PATH
+                 echo "${RunTests}"
+                 UiPathPack (
+                     outputPath: PROCESS_OUTPUT_PATH,
+                     outputType: 'Process',
+                     projectJsonPath: "${WORKSPACE}",
+                     runWorkflowAnalysis: false,
+                     traceLevel: 'None',
+                     version: AutoVersion()
+                 )
+             }
+         }
+         stage('Test code') {
+             steps {
+                 echo 'UiPathTest'
+                 UiPathTest(
+                     credentials: Token(accountName: 'aitraining', credentialsId: 'userkeyOrch'),
+                     folderName: 'sebi',
+                     orchestratorAddress: 'https://cloud.uipath.com/aitraining',
+                     orchestratorTenant: 'UiPathDefault',
+                     parametersFilePath: '',
+                     testResultsOutputPath: '',
+                     testTarget: TestSet('JenkinsTestPipeline'),
+                     timeout: 500,
+                     traceLevel: 'Verbose'
+                 )
+             }
+         }
+         stage('Send email notification') {
+             steps {
+                 echo 'Send email notification'
+                 mail bcc: '',
+                      body: 'Please go at: http://localhost:8080/job/PipelineGateEmail/ and Accept or Reject the build',
+                      cc: '',
+                      from: '',
+                      replyTo: '',
+                      subject: 'Jenkins Build ${currentBuild.currentResult}: Job ${env.JOB_NAME}',
+                      to: 'sebastian.balan99@gmail.com'
+             }
+         }
+         stage('Approval gate') {
+             steps {
+                 echo 'Approval gate'
+                input id: 'ApprovalBuild',
+                message: 'Approve or reject this deploy?'   
+             }
+         }
+         stage('Deploy code') {
+             steps {
+                 echo 'UiPathDeploy'
+                 UiPathDeploy (
+                    createProcess: true,
+                    credentials: Token(accountName: 'aitraining', credentialsId: 'userkeyOrch'),
+                    entryPointPaths: 'Main.xaml',
+                    environments: '',
+                    folderName: 'sebi',
+                    orchestratorAddress: 'https://cloud.uipath.com/aitraining',
+                    orchestratorTenant: 'UiPathDefault',
+                    packagePath: PROCESS_OUTPUT_PATH,
+                    traceLevel: 'Verbose'
+                )
+             }
+         }  
+     }
+ }
