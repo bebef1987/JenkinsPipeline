@@ -11,6 +11,7 @@ pipeline {
                  script{
                      PROCESS_OUTPUT_PATH = "${WORKSPACE}\\Process\\Output\\${BUILD_NUMBER}"
                      TEST_OUTPUT_PATH = "${WORKSPACE}\\Test\\Output\\${BUILD_NUMBER}"
+                     ASSETS_FILE_PATH = "${WORKSPACE}\\assets.csv"
                  }
              }               
          }
@@ -22,6 +23,23 @@ pipeline {
                  url: 'https://github.com/SebastianBalan/JenkinsPipeline'
              }
          }
+         stage('Deploy assets') {
+             when {
+                equals expected : 'True', actual: TestsRunSuccessfully
+            }
+             steps {
+                 echo 'UiPathDeployAssets'
+                 UiPathAssets (
+                     assetsAction: DeployAssets(),
+                     credentials: Token(accountName: 'aitraining', credentialsId: 'userkeyOrch'),
+                     filePath: ASSETS_FILE_PATH,
+                     folderName: 'sebi',
+                     orchestratorAddress: 'https://cloud.uipath.com/aitraining',
+                     orchestratorTenant: 'UiPathDefault',
+                     traceLevel: 'None'
+                )
+             }
+         } 
          stage('Build code for Process') {
              steps {
                  echo 'UiPathPack'
@@ -79,23 +97,6 @@ pipeline {
                     traceLevel: 'Verbose'
                 )
              }
-         }  
-         stage('Deploy assets') {
-             when {
-                equals expected : 'True', actual: TestsRunSuccessfully
-            }
-             steps {
-                 echo 'UiPathDeploy'
-                 UiPathAssets (
-                     assetsAction: DeployAssets(),
-                     credentials: Token(accountName: 'aitraining', credentialsId: 'userkeyOrch'),
-                     filePath: '${WORKSPACE}/test.csv',
-                     folderName: 'sebi',
-                     orchestratorAddress: 'https://cloud.uipath.com/aitraining',
-                     orchestratorTenant: 'UiPathDefault',
-                     traceLevel: 'None'
-                )
-             }
-         }  
+         }   
      }
  }
