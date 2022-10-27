@@ -1,5 +1,9 @@
 pipeline {
      agent any
+     environment {
+        RunTests = "False"
+        TestsRunSuccessfully = "True"
+    }
      stages {
          stage('Initialize the variables') {
              // Each stage is made up of steps
@@ -7,7 +11,6 @@ pipeline {
                  script{
                      PROCESS_OUTPUT_PATH = "${WORKSPACE}\\Process\\Output\\${BUILD_NUMBER}"
                      TEST_OUTPUT_PATH = "${WORKSPACE}\\Test\\Output\\${BUILD_NUMBER}"
-                     RUN_TESTS = "True" 
                  }
              }               
          }
@@ -23,7 +26,6 @@ pipeline {
              steps {
                  echo 'UiPathPack'
                  echo PROCESS_OUTPUT_PATH
-                 echo "${RunTests}"
                  UiPathPack (
                      outputPath: PROCESS_OUTPUT_PATH,
                      outputType: 'Process',
@@ -36,7 +38,7 @@ pipeline {
          }
          stage('Test code') {
             when {
-                RUN_TESTS == "True"
+                equals expected : 'True', actual: RunTests
             }
              steps {
                  echo 'UiPathTest'
@@ -51,9 +53,18 @@ pipeline {
                      timeout: 500,
                      traceLevel: 'Verbose'
                  )
+                 script {
+                     if (currentBuild.result == 'UNSTABLE'){
+                         currentBuild.result = 'FAILURE'
+                         TestsRunSuccessfully = 'False'
+                     }
+                 }
              }
          }
          stage('Deploy code') {
+             when {
+                equals expected : 'True', actual: TestsRunSuccessfully
+            }
              steps {
                  echo 'UiPathDeploy'
                  UiPathDeploy (
@@ -66,6 +77,23 @@ pipeline {
                     orchestratorTenant: 'UiPathDefault',
                     packagePath: PROCESS_OUTPUT_PATH,
                     traceLevel: 'Verbose'
+                )
+             }
+         }  
+         stage('Deploy assets') {
+             when {
+                equals expected : 'True', actual: TestsRunSuccessfully
+            }
+             steps {
+                 echo 'UiPathDeploy'
+                 UiPathAssets (
+                     assetsAction: DeployAssets(),
+                     credentials: Token(accountName: 'aitraining', credentialsId: 'userkeyOrch'),
+                     filePath: '${WORKSPACE}/test.csv',
+                     folderName: 'sebi',
+                     orchestratorAddress: 'https://cloud.uipath.com/aitraining',
+                     orchestratorTenant: 'UiPathDefault',
+                     traceLevel: 'None'
                 )
              }
          }  

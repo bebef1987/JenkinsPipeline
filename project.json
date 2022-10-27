@@ -3,13 +3,14 @@
   "description": "Blank Process",
   "main": "Main.xaml",
   "dependencies": {
-    "UiPath.System.Activities": "[22.10.3]"
+    "UiPath.System.Activities": "[22.10.3]",
+    "UiPath.Testing.Activities": "[22.10.0-preview]"
   },
   "webServices": [],
   "entitiesStores": [],
   "schemaVersion": "4.0",
   "studioVersion": "22.10.0.0",
-  "projectVersion": "1.0.119343352",
+  "projectVersion": "1.0.120554047",
   "runtimeOptions": {
     "autoDispose": false,
     "netFrameworkLazyLoading": false,
@@ -46,7 +47,7 @@
         "fileName": "TestMAtch.xaml"
       },
       {
-        "editingStatus": "Publishable",
+        "editingStatus": "InProgress",
         "testCaseId": "8b1b4175-51a5-47e2-abfa-27ecf1c4ce8b",
         "testCaseType": "TestCase",
         "executionTemplateType": 1,

@@ -1,0 +1,5 @@
+name,type,value,description
+Team,Text,banul si stema,
+Email,Text,tes.email@uipath.com,
+LastName,Text,Balan,
+Age,Integer,23,
