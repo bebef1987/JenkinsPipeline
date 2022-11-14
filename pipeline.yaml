@@ -10,7 +10,7 @@ pipeline {
              steps{
                  script{
                      PROCESS_OUTPUT_PATH = "${WORKSPACE}\\Process\\Output\\${BUILD_NUMBER}"
-                     TEST_OUTPUT_PATH = "${WORKSPACE}\\Test\\Output\\${BUILD_NUMBER}"
+                     TEST_OUTPUT_PATH = "${WORKSPACE}\\test-reports"
                      ASSETS_FILE_PATH = "${WORKSPACE}\\assets.csv"
                  }
              }               
@@ -29,7 +29,7 @@ pipeline {
                  powershell '''param(
                         $ProjectFilePath="C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\PipelineGateEmail\\project.json",
                         $ExecutableFilePath="C:\\Users\\sebastian.balan\\AppData\\Local\\Programs\\UiPath\\Studio\\UiPath.Studio.CommandLine.exe",
-                        $OutputFilePath="$(Get-Date -Format \'yyyy-MM-dd-HH-mm-ss\')-Workflow-Analysis.json",
+                        $OutputFilePath="$(Get-Date -Format \'yyyy-MM-dd-HH-mm-ss\')-Workflow-Analysis.json"
                     )
                 
                 
@@ -105,6 +105,88 @@ pipeline {
                     }'''
              }
          }
+         stage('Queue Configuration') {
+             steps {
+                 echo 'Queue Configuration'
+                 powershell '''param(
+                                $AccountName="aitraining",
+                                $ClientId="8DEv1AMNXczW3y4U15LL3jYf62jK93n5",
+                                $TenantName="UiPathDefault",
+                                $ConfigFile = "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\PipelineGateEmail\\ConfigurationCSV.csv",
+                                $OrcUserKey = "XgglQSRAy3XNPExMTBmALrP78QWuoN0JjM6CueoxQ3eB_",
+                                $CloudDeployment = "Cloud"
+                               )
+                            
+                            
+                            Write-Output "$(Get-Date -Format \'HH:mm:ss\') - STARTED - Queue Configuration"
+                            Write-Output $ConfigFile
+                            if (Get-Module | Where-Object {$_.Name -eq "UiPath.Powershell"}) 
+                            {
+                                write-host "UiPath.Pwershell Module is already imported."
+                            }
+                            else 
+                            {
+                                # If module is not imported, but available on disk then import
+                                if (Get-Module -ListAvailable | Where-Object {$_.Name -eq "UiPath.Powershell"}) {
+                                    Import-Module UiPath.Powershell
+                                }
+                                else {
+                                    Install-PackageProvider -Name NuGet -Force -Scope CurrentUser
+                                    Register-PSRepository -Name UiPath -SourceLocation https://www.myget.org/F/uipath-dev/api/v2
+                                    Install-Module -Repository UiPath -Name UiPath.Powershell -Force -Scope CurrentUser
+                                    Import-Module UiPath.PowerShell
+                                }
+                            }
+                            
+                            
+                            
+                            $authtoken = Get-UiPathAuthToken -Session -AccountName $AccountName -ClientId $ClientId -TenantName $TenantName -UserKey  $OrcUserKey -CloudDeployment $CloudDeployment
+                            
+                            $QueueList = Import-Csv $ConfigFile
+                            
+                            foreach ($Queue in $QueueList) {
+                                $QueueName = $Queue.QueueName
+                                $Description = $Queue.Description
+                                [bool]$EnforceUniqueRef = [bool]$Queue.EnforceUniqueRef
+                                [bool]$AutoRetry = [bool]$Queue.AutoRetry
+                                $MaxRetry = [int32]$Queue.MaxRetry
+                                $TimeOut = [int32]$Queue.TimeOut
+                                $FolderName = $Queue.FolderName
+                                
+                                Set-UiPathCurrentFolder -FolderPath $FolderName -AuthToken $authtoken
+                                
+                                 try
+                                {
+                                    if ($AutoRetry -and $EnforceUniqueRef)
+                                    {
+                                        Add-UiPathQueueDefinition -Name $QueueName -AcceptAutomaticallyRetry -AuthToken $authtoken -Description $QueueDescription  -EnforceUniqueReference -MaxNumberOfRetries $MaxRetry -RequestTimeout $TimeOut
+                                    }
+                                    elseif ( -not $AutoRetry -and -not $EnforceUniqueRef)
+                                    {
+                                        Add-UiPathQueueDefinition -Name $QueueName -AuthToken $authtoken -Description $QueueDescription -MaxNumberOfRetries $MaxRetry -RequestTimeout $TimeOut
+                                    }
+                                    elseif ( -not $AutoRetry -and  $EnforceUniqueRef)
+                                    {
+                                        Add-UiPathQueueDefinition -Name $QueueName -AuthToken $authtoken -Description $QueueDescription  -EnforceUniqueReference -MaxNumberOfRetries $MaxRetry -RequestTimeout $TimeOut
+                                    }
+                                    else
+                                    {
+                                        Add-UiPathQueueDefinition -Name $QueueName -AcceptAutomaticallyRetry -AuthToken $authtoken -Description $QueueDescription  -MaxNumberOfRetries $MaxRetry -RequestTimeout $TimeOut
+                                    }
+                                }
+                                catch 
+                                {
+                                    # skip exception if queue is already defined in orchestrator
+                                    if ( -not $PSItem.Exception.Message -contains "is already used" )
+                                    {
+                                        exit 1
+                                    }
+                                    Write-Output "Queue already defined"
+                                }
+                            }
+                            Write-Output "$(Get-Date -Format \'HH:mm:ss\') - COMPLETED - Queue Configuration"'''
+             }
+         }
          stage('Deploy assets') {
              when {
                 equals expected : 'True', actual: TestsRunSuccessfully
@@ -148,7 +230,7 @@ pipeline {
                      orchestratorAddress: 'https://cloud.uipath.com/aitraining',
                      orchestratorTenant: 'UiPathDefault',
                      parametersFilePath: '',
-                     testResultsOutputPath: '',
+                     testResultsOutputPath: 'TEST_OUTPUT_PATH',
                      testTarget: TestSet('JenkinsTestPipeline'),
                      timeout: 500,
                      traceLevel: 'Verbose'
