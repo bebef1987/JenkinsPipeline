@@ -1,7 +1,7 @@
 pipeline {
      agent any
      environment {
-        RunTests = "False"
+        RunTests = "True"
         TestsRunSuccessfully = "True"
     }
      stages {
