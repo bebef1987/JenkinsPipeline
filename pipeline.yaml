@@ -105,7 +105,85 @@ pipeline {
                     }'''
              }
          }
+         stage('Build code for Process') {
+             steps {
+                 echo 'UiPathPack'
+                 echo PROCESS_OUTPUT_PATH
+                 UiPathPack (
+                     outputPath: PROCESS_OUTPUT_PATH,
+                     outputType: 'Process',
+                     projectJsonPath: "${WORKSPACE}",
+                     runWorkflowAnalysis: false,
+                     traceLevel: 'None',
+                     version: AutoVersion()
+                 )
+             }
+         }
+         stage('Test code') {
+            when {
+                equals expected : 'True', actual: RunTests
+            }
+             steps {
+                 echo 'UiPathTest'
+                 UiPathTest(
+                     credentials: Token(accountName: 'aitraining', credentialsId: 'userkeyOrch'),
+                     folderName: 'sebi',
+                     orchestratorAddress: 'https://cloud.uipath.com/aitraining',
+                     orchestratorTenant: 'UiPathDefault',
+                     parametersFilePath: '',
+                     testResultsOutputPath: 'TEST_OUTPUT_PATH',
+                     testTarget: TestSet('JenkinsTestPipeline'),
+                     timeout: 500,
+                     traceLevel: 'Verbose'
+                 )
+                 script {
+                     if (currentBuild.result == 'UNSTABLE'){
+                         currentBuild.result = 'FAILURE'
+                         TestsRunSuccessfully = 'False'
+                     }
+                 }
+             }
+         }
+         stage('Deploy code') {
+             when {
+                equals expected : 'True', actual: TestsRunSuccessfully
+            }
+             steps {
+                 echo 'UiPathDeploy'
+                 UiPathDeploy (
+                    createProcess: true,
+                    credentials: Token(accountName: 'aitraining', credentialsId: 'userkeyOrch'),
+                    entryPointPaths: 'Main.xaml',
+                    environments: '',
+                    folderName: 'sebi',
+                    orchestratorAddress: 'https://cloud.uipath.com/aitraining',
+                    orchestratorTenant: 'UiPathDefault',
+                    packagePath: PROCESS_OUTPUT_PATH,
+                    traceLevel: 'Verbose'
+                )
+             }
+         }
+         stage('Deploy assets') {
+             when {
+                equals expected : 'True', actual: TestsRunSuccessfully
+            }
+             steps {
+                 echo 'UiPathDeployAssets'
+                 UiPathAssets (
+                     assetsAction: DeployAssets(),
+                     credentials: Token(accountName: 'aitraining', credentialsId: 'userkeyOrch'),
+                     filePath: ASSETS_FILE_PATH,
+                     folderName: 'sebi',
+                     orchestratorAddress: 'https://cloud.uipath.com/aitraining',
+                     orchestratorTenant: 'UiPathDefault',
+                     traceLevel: 'None'
+                )
+             }
+         } 
          stage('Queue Configuration') {
+            when {
+                equals expected : 'True', actual: TestsRunSuccessfully
+            }
              steps {
                  echo 'Queue Configuration'
                  powershell '''param(
@@ -114,6 +192,7 @@ pipeline {
                                 $TenantName="UiPathDefault",
                                 $ConfigFile = "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\PipelineGateEmail\\ConfigurationCSV.csv",
                                 $OrcUserKey = "XgglQSRAy3XNPExMTBmALrP78QWuoN0JjM6CueoxQ3eB_",
+                                $OrcPassword = "M9Jw.DZA2",
                                 $CloudDeployment = "Cloud"
                                )
                             
@@ -185,81 +264,6 @@ pipeline {
                                 }
                             }
                             Write-Output "$(Get-Date -Format \'HH:mm:ss\') - COMPLETED - Queue Configuration"'''
-             }
-         }
-         stage('Deploy assets') {
-             when {
-                equals expected : 'True', actual: TestsRunSuccessfully
-            }
-             steps {
-                 echo 'UiPathDeployAssets'
-                 UiPathAssets (
-                     assetsAction: DeployAssets(),
-                     credentials: Token(accountName: 'aitraining', credentialsId: 'userkeyOrch'),
-                     filePath: ASSETS_FILE_PATH,
-                     folderName: 'sebi',
-                     orchestratorAddress: 'https://cloud.uipath.com/aitraining',
-                     orchestratorTenant: 'UiPathDefault',
-                     traceLevel: 'None'
-                )
-             }
-         } 
-         stage('Build code for Process') {
-             steps {
-                 echo 'UiPathPack'
-                 echo PROCESS_OUTPUT_PATH
-                 UiPathPack (
-                     outputPath: PROCESS_OUTPUT_PATH,
-                     outputType: 'Process',
-                     projectJsonPath: "${WORKSPACE}",
-                     runWorkflowAnalysis: false,
-                     traceLevel: 'None',
-                     version: AutoVersion()
-                 )
-             }
-         }
-         stage('Test code') {
-            when {
-                equals expected : 'True', actual: RunTests
-            }
-             steps {
-                 echo 'UiPathTest'
-                 UiPathTest(
-                     credentials: Token(accountName: 'aitraining', credentialsId: 'userkeyOrch'),
-                     folderName: 'sebi',
-                     orchestratorAddress: 'https://cloud.uipath.com/aitraining',
-                     orchestratorTenant: 'UiPathDefault',
-                     parametersFilePath: '',
-                     testResultsOutputPath: 'TEST_OUTPUT_PATH',
-                     testTarget: TestSet('JenkinsTestPipeline'),
-                     timeout: 500,
-                     traceLevel: 'Verbose'
-                 )
-                 script {
-                     if (currentBuild.result == 'UNSTABLE'){
-                         currentBuild.result = 'FAILURE'
-                         TestsRunSuccessfully = 'False'
-                     }
-                 }
-             }
-         }
-         stage('Deploy code') {
-             when {
-                equals expected : 'True', actual: TestsRunSuccessfully
-            }
-             steps {
-                 echo 'UiPathDeploy'
-                 UiPathDeploy (
-                    createProcess: true,
-                    credentials: Token(accountName: 'aitraining', credentialsId: 'userkeyOrch'),
-                    entryPointPaths: 'Main.xaml',
-                    environments: '',
-                    folderName: 'sebi',
-                    orchestratorAddress: 'https://cloud.uipath.com/aitraining',
-                    orchestratorTenant: 'UiPathDefault',
-                    packagePath: PROCESS_OUTPUT_PATH,
-                    traceLevel: 'Verbose'
-                )
              }
          }   
      }
