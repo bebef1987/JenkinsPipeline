@@ -192,7 +192,6 @@ pipeline {
                                 $TenantName="UiPathDefault",
                                 $ConfigFile = "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\PipelineGateEmail\\ConfigurationCSV.csv",
                                 $OrcUserKey = "XgglQSRAy3XNPExMTBmALrP78QWuoN0JjM6CueoxQ3eB_",
-                                $OrcPassword = "M9Jw.DZA2",
                                 $CloudDeployment = "Cloud"
                                )
                             
