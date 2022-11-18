@@ -30,23 +30,15 @@ pipeline {
                  script {
                     
                     def foldersList = []
-                                
-                    def osName = isUnix() ? "UNIX" : "WINDOWS"
-                    echo "osName: " + osName
                 
                     echo ".... WORKSPACE: ${WORKSPACE}"
                 
-                    if(isUnix()) {
-                        def output = sh returnStdout: true, script: "ls -lR ${WORKSPACE} | grep ^d | awk '{print \$9}'"
-                        foldersList = output.tokenize('\n').collect() { it }
-                    } else {
-                        def output = bat returnStdout: true, script: "dir \"${WORKSPACE}\\PipelineGateEmail@tmp\""
-                        foldersList = output.tokenize('\n').collect() { it }
-                        foldersList = foldersList.drop(2)
+                    def output = bat returnStdout: true, script: "dir \"${WORKSPACE}\\PipelineGateEmail@tmp\""
+                    foldersList = output.tokenize('\n').collect() { it }
+                    #foldersList = foldersList.drop(2)
                                 
-                    }
                     echo ".... " + foldersList
-                    }
+                }
                  UiPathPack (
                      outputPath: PROCESS_OUTPUT_PATH,
                      outputType: 'Process',
