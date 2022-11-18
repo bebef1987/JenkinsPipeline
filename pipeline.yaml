@@ -23,31 +23,6 @@ pipeline {
                  url: 'https://github.com/SebastianBalan/JenkinsPipeline'
              }
          }
-         stage('Build code for Process') {
-             steps {
-                 echo 'UiPathPack'
-                 echo PROCESS_OUTPUT_PATH
-                 script {
-                    
-                    def foldersList = []
-                
-                    echo ".... WORKSPACE: ${WORKSPACE}"
-                
-                    def output = bat returnStdout: true, script: "dir \"${WORKSPACE}@tmp\""
-                    foldersList = output.tokenize('\n').collect() { it }
-                                
-                    echo ".... " + foldersList
-                }
-                 UiPathPack (
-                     outputPath: PROCESS_OUTPUT_PATH,
-                     outputType: 'Process',
-                     projectJsonPath: "${WORKSPACE}",
-                     runWorkflowAnalysis: false,
-                     traceLevel: 'None',
-                     version: AutoVersion()
-                 )
-             }
-         }
          stage('Run Workflow Analyzer') {
              steps {
                  echo 'Workflow Analyzer'
@@ -128,6 +103,20 @@ pipeline {
                     {
                     	Exit 1
                     }'''
+             }
+         }
+         stage('Build code for Process') {
+             steps {
+                 echo 'UiPathPack'
+                 echo PROCESS_OUTPUT_PATH
+                 UiPathPack (
+                     outputPath: PROCESS_OUTPUT_PATH,
+                     outputType: 'Process',
+                     projectJsonPath: "${WORKSPACE}",
+                     runWorkflowAnalysis: false,
+                     traceLevel: 'None',
+                     version: AutoVersion()
+                 )
              }
          }
          stage('Test code') {
