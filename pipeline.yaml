@@ -35,7 +35,6 @@ pipeline {
                 
                     def output = bat returnStdout: true, script: "dir \"${WORKSPACE}\\PipelineGateEmail@tmp\""
                     foldersList = output.tokenize('\n').collect() { it }
-                    #foldersList = foldersList.drop(2)
                                 
                     echo ".... " + foldersList
                 }
