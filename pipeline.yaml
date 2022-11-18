@@ -33,7 +33,7 @@ pipeline {
                 
                     echo ".... WORKSPACE: ${WORKSPACE}"
                 
-                    def output = bat returnStdout: true, script: "dir \"${WORKSPACE}\\PipelineGateEmail@tmp\""
+                    def output = bat returnStdout: true, script: "dir \"${WORKSPACE}@tmp\""
                     foldersList = output.tokenize('\n').collect() { it }
                                 
                     echo ".... " + foldersList
