@@ -27,7 +27,7 @@ pipeline {
              steps {
                  echo 'Workflow Analyzer'
                  powershell '''param(
-                        $ProjectFilePath="project.json",
+                        $ProjectFilePath="C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\PipelineGateEmail\\project.json",
                         $ExecutableFilePath="C:\\Users\\sebastian.balan\\AppData\\Local\\Programs\\UiPath\\Studio\\UiPath.Studio.CommandLine.exe",
                         $OutputFilePath="$(Get-Date -Format \'yyyy-MM-dd-HH-mm-ss\')-Workflow-Analysis.json"
                     )
