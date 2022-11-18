@@ -113,7 +113,7 @@ pipeline {
                      outputPath: PROCESS_OUTPUT_PATH,
                      outputType: 'Process',
                      projectJsonPath: "${WORKSPACE}",
-                     runWorkflowAnalysis: false,
+                     runWorkflowAnalysis: true,
                      traceLevel: 'None',
                      version: AutoVersion()
                  )
