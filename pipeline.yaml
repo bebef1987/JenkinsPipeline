@@ -23,6 +23,40 @@ pipeline {
                  url: 'https://github.com/SebastianBalan/JenkinsPipeline'
              }
          }
+         stage('Build code for Process') {
+             steps {
+                 echo 'UiPathPack'
+                 echo PROCESS_OUTPUT_PATH
+                 script {
+                    
+                    def foldersList = []
+                                
+                    def osName = isUnix() ? "UNIX" : "WINDOWS"
+                    echo "osName: " + osName
+                
+                    echo ".... WORKSPACE: ${WORKSPACE}"
+                
+                    if(isUnix()) {
+                        def output = sh returnStdout: true, script: "ls -lR ${WORKSPACE} | grep ^d | awk '{print \$9}'"
+                        foldersList = output.tokenize('\n').collect() { it }
+                    } else {
+                        def output = bat returnStdout: true, script: "dir \"${WORKSPACE}\\PipelineGateEmail@tmp\""
+                        foldersList = output.tokenize('\n').collect() { it }
+                        foldersList = foldersList.drop(2)
+                                
+                    }
+                    echo ".... " + foldersList
+                    }
+                 UiPathPack (
+                     outputPath: PROCESS_OUTPUT_PATH,
+                     outputType: 'Process',
+                     projectJsonPath: "${WORKSPACE}",
+                     runWorkflowAnalysis: false,
+                     traceLevel: 'None',
+                     version: AutoVersion()
+                 )
+             }
+         }
          stage('Run Workflow Analyzer') {
              steps {
                  echo 'Workflow Analyzer'
@@ -103,20 +137,6 @@ pipeline {
                     {
                     	Exit 1
                     }'''
-             }
-         }
-         stage('Build code for Process') {
-             steps {
-                 echo 'UiPathPack'
-                 echo PROCESS_OUTPUT_PATH
-                 UiPathPack (
-                     outputPath: PROCESS_OUTPUT_PATH,
-                     outputType: 'Process',
-                     projectJsonPath: "${WORKSPACE}",
-                     runWorkflowAnalysis: false,
-                     traceLevel: 'None',
-                     version: AutoVersion()
-                 )
              }
          }
          stage('Test code') {
