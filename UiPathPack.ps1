@@ -197,6 +197,7 @@ WriteLog "Executing $uipathCLI $ParamMask"
 if($LASTEXITCODE -eq 0)
 {
     WriteLog "Done! Package(s) destination folder is : $destination_folder"
+    Remove-Item $destination_folder
     Exit 0
 }else {
     WriteLog "Unable to Pack project. Exit code $LASTEXITCODE"
