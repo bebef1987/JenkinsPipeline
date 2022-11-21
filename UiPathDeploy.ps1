@@ -175,7 +175,7 @@ WriteLog "Executing $uipathCLI $ParamMask"
 
 #call uipath cli 
 & "$uipathCLI" $ParamList.ToArray()
-Remove-Item $destination_folder -Recurse -Force -EA SilentlyContinue -Verbose
+Remove-Item $packages_path -Recurse -Force -EA SilentlyContinue -Verbose
 if($LASTEXITCODE -eq 0)
 {
     WriteLog "Done!"
