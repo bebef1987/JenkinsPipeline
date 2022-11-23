@@ -53,7 +53,6 @@ pipeline {
                     $Recommendation = "Recommendation"
                     $FilePath = "File Path"
                     
-                    $row=2
                     foreach ($ky in $JO.PSObject.Properties)
                     {
                     	if ($ky.Name.EndsWith("ErrorCode"))
@@ -68,25 +67,22 @@ pipeline {
                     	{
                     		$FilePath = $ky.Value
                     	}
-                    	if ($ky.Name.EndsWith("Recommendation"))
-                    	{
-                    		$Recommendation = $ky.Value
-                    		if ($ErrorSeverity = "Error")
-                    		{ 
-                    			Write-Output "Error code: $ErrorCode, File: $FilePath, $Description"
-                    		}
-                    		$row++
-                    	}
-                    
-                    	if ($ky.Name.EndsWith("ErrorSeverity"))
+                        if ($ky.Name.EndsWith("ErrorSeverity"))
                     	{
                     		$ErrorSeverity = $ky.Value
-                    		if ($ky.Value.Equals("Error"))
+                    		if ($ErrorSeverity.Equals("Error"))
                     		{
                     			$totalErros++
                     		}
                     	}
-                    
+                    	if ($ky.Name.EndsWith("Recommendation"))
+                    	{
+                    		$Recommendation = $ky.Value
+                    		if ($ErrorSeverity.Equals("Error"))
+                    		{ 
+                    			Write-Output "Error code: $ErrorCode, File: $FilePath, $Description, $Recommendation"
+                    		}
+                    	}
                     }
                     
                     
