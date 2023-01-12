@@ -6,7 +6,6 @@ pipeline {
     }
      stages {
          stage('Initialize the variables') {
-             // Each stage is made up of steps
              steps{
                  script{
                      PROCESS_OUTPUT_PATH = "${WORKSPACE}\\Process\\Output\\${BUILD_NUMBER}"

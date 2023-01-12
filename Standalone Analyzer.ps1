@@ -1,32 +1,4 @@
-pipeline {
-     agent any
-     environment {
-        RunTests = "True"
-        TestsRunSuccessfully = "True"
-    }
-     stages {
-         stage('Initialize the variables') {
-             // Each stage is made up of steps
-             steps{
-                 script{
-                     PROCESS_OUTPUT_PATH = "${WORKSPACE}\\Process\\Output\\${BUILD_NUMBER}"
-                     TEST_OUTPUT_PATH = "${WORKSPACE}\\test-reports"
-                     ASSETS_FILE_PATH = "${WORKSPACE}\\assets.csv"
-                 }
-             }               
-         }
-         stage('Checkout code') {
-             steps {
-                 // Get some code from a GitHub repository
-                 git branch: 'main',
-                 credentialsId: '8256c430-4681-428d-9199-359ec61b5327',
-                 url: 'https://github.com/SebastianBalan/JenkinsPipeline'
-             }
-         }
-         stage('Standalone Analyzer') {
-             steps {
-                 echo 'Standalone Analyzer'
-                 powershell '''param(
+param(
                         $ProjectFilePath=".\\",
                         $OutputFilePath="$(Get-Date -Format \'yyyy-MM-dd-HH-mm-ss\')-Workflow-Analysis.json",
                         $StandaloneAnalyzerPath = "C:\\Users\\sebastian.balan\\Downloads\\bin\\Debug\\net6.0-windows7.0\\UiPath.ProjectPackager.dll",
@@ -104,38 +76,5 @@ pipeline {
                     if ($totalErros > 0)
                     {
                     	Exit 1
-                    }'''
-             }
-         }
-         stage('Build code for Process') {
-             steps {
-                 echo 'UiPathPack'
-                 powershell returnStatus: true, script: '.\\UiPathPack.ps1 ".\\project.json" -destination_folder ".\\ProcessOutputPacked" -autoversion'
-             }
-         }
-         stage('Deploy code') {
-             when {
-                equals expected : 'True', actual: TestsRunSuccessfully
-            }
-             steps {
-                 echo 'UiPathDeploy'
-                 powershell returnStatus: true, script: '.\\UiPathDeploy.ps1 ".\\ProcessOutputPacked" "https://cloud.uipath.com/aitraining" UiPathDefault -UserKey 2bpZubtS0CTois48kCKdfr7CTRq_5omtbpaQG43v4rcmU -account_name aitraining -folder_organization_unit sebi'
-             }
-         }
-         stage('Run Tests') {
-             when {
-                equals expected : 'True', actual: RunTests
-            }
-             steps {
-                 echo 'UiPathRunTests'
-                 powershell returnStatus: true, script: '.\\UiPathRunTests.ps1 "https://cloud.uipath.com/aitraining" UiPathDefault -UserKey 2bpZubtS0CTois48kCKdfr7CTRq_5omtbpaQG43v4rcmU -account_name aitraining -testset "JenkinsTestPipeline" -folder_organization_unit sebi -result_path ".\\test-reports"'
-                 script {
-                     if (currentBuild.result == 'UNSTABLE'){
-                         currentBuild.result = 'FAILURE'
-                         TestsRunSuccessfully = 'False'
-                     }
-                 }
-             }
-         }
-     }
- }
+                    }
+             

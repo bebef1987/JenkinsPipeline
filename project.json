@@ -3,6 +3,7 @@
   "description": "Blank Process",
   "main": "Main.xaml",
   "dependencies": {
+    "TestWindowsLibrary": "[1.0.125158834]",
     "UiPath.System.Activities": "[22.10.3]",
     "UiPath.Testing.Activities": "[22.10.0-preview]"
   },
@@ -43,15 +44,21 @@
         "editingStatus": "Publishable",
         "testCaseId": "b6a347ec-befa-456c-a2a5-da1a8687152a",
         "testCaseType": "TestCase",
-        "executionTemplateType": 1,
+        "executionTemplateType": "BuiltIn",
         "fileName": "TestMAtch.xaml"
       },
       {
         "editingStatus": "InProgress",
         "testCaseId": "8b1b4175-51a5-47e2-abfa-27ecf1c4ce8b",
         "testCaseType": "TestCase",
-        "executionTemplateType": 1,
+        "executionTemplateType": "BuiltIn",
         "fileName": "TestMatchFail.xaml"
+      },
+      {
+        "editingStatus": "InProgress",
+        "testCaseId": "b00a5392-1425-4bdf-af74-eb618d772838",
+        "testCaseType": "TestCase",
+        "fileName": "TestCase.xaml"
       }
     ],
     "modernBehavior": true
