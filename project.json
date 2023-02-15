@@ -1,5 +1,5 @@
 {
-  "name": "JenkinsPipeline",
+  "name": "JenkinsPipeline_Tests",
   "description": "Blank Process",
   "main": "Main.xaml",
   "dependencies": {
@@ -10,7 +10,7 @@
   "entitiesStores": [],
   "schemaVersion": "4.0",
   "studioVersion": "22.10.0.0",
-  "projectVersion": "1.0.120554047",
+  "projectVersion": "1.0.130194366-alpha.3",
   "runtimeOptions": {
     "autoDispose": false,
     "netFrameworkLazyLoading": false,
@@ -18,6 +18,7 @@
     "isAttended": false,
     "requiresUserInteraction": true,
     "supportsPersistence": false,
+    "workflowSerialization": "DataContract",
     "excludedLoggedData": [
       "Private:*",
       "*password*"
@@ -30,7 +31,7 @@
   },
   "designOptions": {
     "projectProfile": "Developement",
-    "outputType": "Process",
+    "outputType": "Tests",
     "libraryOptions": {
       "includeOriginalXaml": false,
       "privateWorkflows": []
@@ -65,8 +66,8 @@
   "expressionLanguage": "VisualBasic",
   "entryPoints": [
     {
-      "filePath": "Main.xaml",
-      "uniqueId": "a71b0968-c66c-4919-908d-0a4bcc8a7ee9",
+      "filePath": "TestMAtch.xaml",
+      "uniqueId": "b6a347ec-befa-456c-a2a5-da1a8687152a",
       "input": [],
       "output": []
     }
@@ -74,5 +75,6 @@
   "isTemplate": false,
   "templateProjectData": {},
   "publishData": {},
-  "targetFramework": "Windows"
+  "targetFramework": "Windows",
+  "coverageMergeWorkflowPath": "CoverageMergeHelperWorkflow.xaml"
 }
