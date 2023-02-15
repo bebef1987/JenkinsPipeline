@@ -18,89 +18,61 @@ pipeline {
              steps {
                  // Get some code from a GitHub repository
                  git branch: 'main',
-                 credentialsId: '8256c430-4681-428d-9199-359ec61b5327',
-                 url: 'https://github.com/SebastianBalan/JenkinsPipeline'
+                 credentialsId: 'gitCredentials',
+                 url: 'https://github.com/bebef1987/JenkinsPipeline'
              }
          }
+         /*
          stage('Run Workflow Analyzer') {
              steps {
                  echo 'Workflow Analyzer'
-                 powershell '''param(
-                        $ProjectFilePath="C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\PipelineGateEmail\\project.json",
-                        $ExecutableFilePath="C:\\Users\\sebastian.balan\\AppData\\Local\\Programs\\UiPath\\Studio\\UiPath.Studio.CommandLine.exe",
-                        $OutputFilePath="$(Get-Date -Format \'yyyy-MM-dd-HH-mm-ss\')-Workflow-Analysis.json"
-                    )
-                
-                
-                    Write-Output "$(Get-Date -Format 'HH:mm:ss') - STARTED - Static Code Analyzer"
-
-                    $Command = "$ExecutableFilePath analyze -p `'$ProjectFilePath`'"
-                    Invoke-Expression $Command | Out-File -FilePath $OutputFilePath
-                    $rp = Get-Content $OutputFilePath | foreach {$_.replace("#json","")}
-                    
-                    Set-Content -Path $OutputFilePath -Value $rp
-                    #Write-Output $rp
-                    $JO = Get-Content $OutputFilePath | ConvertFrom-Json
-                    
-                    #Write-Output $JO.'056582b5-7ca5-414a-a7fd-2effa9d41931-ErrorSeverity'
-                    $totalErros=0
-                    
-                    
-                    $ErrorCode = "Error Code"
-                    $ErrorSeverity = "Error Severity"
-                    $Description = "Description"
-                    $Recommendation = "Recommendation"
-                    $FilePath = "File Path"
-                    
-                    foreach ($ky in $JO.PSObject.Properties)
-                    {
-                    	if ($ky.Name.EndsWith("ErrorCode"))
-                    	{
-                    		$ErrorCode = $ky.Value
-                    	}
-                    	if ($ky.Name.EndsWith("Description"))
-                    	{
-                    		$Description = $ky.Value
-                    	}
-                    	if ($ky.Name.EndsWith("FilePath"))
-                    	{
-                    		$FilePath = $ky.Value
-                    	}
-                        if ($ky.Name.EndsWith("ErrorSeverity"))
-                    	{
-                    		$ErrorSeverity = $ky.Value
-                    		if ($ErrorSeverity.Equals("Error"))
-                    		{
-                    			$totalErros++
-                    		}
-                    	}
-                    	if ($ky.Name.EndsWith("Recommendation"))
-                    	{
-                    		$Recommendation = $ky.Value
-                    		if ($ErrorSeverity.Equals("Error"))
-                    		{ 
-                    			Write-Output "Error code: $ErrorCode, File: $FilePath, $Description, $Recommendation"
-                    		}
-                    	}
-                    }
-                    
-                    
-                    
-                    #Write-Output to pipeline
-                    
-                    Write-Output "$(Get-Date -Format 'HH:mm:ss') - COMPLETED - Static Code Analyzer"
-                    
-                    #Get-Content $OutputFilePath | ConvertFrom-Json | ConvertTo-Csv | Out-File $CSVFilePath
-                    
-                    
-                    Write-Output "Total Number of Violations = $totalErros"
-                    if ($totalErros > 0)
-                    {
-                    	Exit 1
-                    }'''
+                 powershell(". '.UipathAnalize.ps1'") 
              }
          }
-         stage('Build code for Process') {
+         */
+
+         stage('Test code') {
+            when {
+                equals expected : 'True', actual: RunTests
+            }
+             steps {
+                 echo 'UiPathTest'
+                  /*UiPathTest(
+                     credentials: ExternalApp(
+                            accountForApp: 'myorggxpsdbv', 
+                            applicationId: '4c63e81b-d4c1-45d3-8c43-4cc8aa96ff8e', 
+                            applicationScope: 'OR.Assets OR.BackgroundTasks OR.Execution OR.Folders OR.Jobs OR.Machines.Read OR.Monitoring OR.Robots.Read OR.Settings.Read OR.TestSetExecutions OR.TestSets OR.TestSetSchedules OR.Users.Read', 
+                            applicationSecret: 'Uipathkey', 
+                            identityUrl: 'https://cloud.uipath.com/'
+                            ), 
+                     folderName: 'Sales',
+                     orchestratorAddress: 'https://cloud.uipath.com/',
+                     orchestratorTenant: 'DefaultTenant',
+                     parametersFilePath: '',
+                     testResultsOutputPath: 'TEST_OUTPUT_PATH',
+                     testTarget: TestProject(
+                        environments: '', 
+                        testProjectPath: "${WORKSPACE}\\project.json"
+                        ),
+                     timeout: 500,
+                     traceLevel: 'Verbose'
+                 )
+                  */
+                  
+    
+                 powershell '''
+                 ./UiPathRunTests.ps1 -orchestrator_url https://cloud.uipath.com/ -orchestrator_tenant DefaultTenant -accountForApp myorggxpsdbv -applicationId 4c63e81b-d4c1-45d3-8c43-4cc8aa96ff8e -applicationSecret "GEEL)Fhnvast1F1M" -applicationScope "OR.Assets OR.BackgroundTasks OR.Execution OR.Folders OR.Jobs OR.Machines.Read OR.Monitoring OR.Robots.Read OR.Settings.Read OR.TestSetExecutions OR.TestSets OR.TestSetSchedules OR.Users.Read" -folder_organization_unit Sales -result_path TEST_OUTPUT_PATH -project_path "$env:WORKSPACE\\project.json"
+                 '''
+                 script {
+                     if (currentBuild.result == 'UNSTABLE'){
+                         currentBuild.result = 'FAILURE'
+                         TestsRunSuccessfully = 'False'
+                     }
+                 }
+             }
+         }
+         /*
+        stage('Build code for Process') {
              steps {
                  echo 'UiPathPack'
                  echo PROCESS_OUTPUT_PATH
@@ -114,31 +86,6 @@ pipeline {
                  )
              }
          }
-         stage('Test code') {
-            when {
-                equals expected : 'True', actual: RunTests
-            }
-             steps {
-                 echo 'UiPathTest'
-                 UiPathTest(
-                     credentials: Token(accountName: 'aitraining', credentialsId: 'userkeyOrch'),
-                     folderName: 'sebi',
-                     orchestratorAddress: 'https://cloud.uipath.com/aitraining',
-                     orchestratorTenant: 'UiPathDefault',
-                     parametersFilePath: '',
-                     testResultsOutputPath: 'TEST_OUTPUT_PATH',
-                     testTarget: TestSet('JenkinsTestPipeline'),
-                     timeout: 500,
-                     traceLevel: 'Verbose'
-                 )
-                 script {
-                     if (currentBuild.result == 'UNSTABLE'){
-                         currentBuild.result = 'FAILURE'
-                         TestsRunSuccessfully = 'False'
-                     }
-                 }
-             }
-         }
          stage('Deploy code') {
              when {
                 equals expected : 'True', actual: TestsRunSuccessfully
@@ -147,12 +94,18 @@ pipeline {
                  echo 'UiPathDeploy'
                  UiPathDeploy (
                     createProcess: true,
-                    credentials: Token(accountName: 'aitraining', credentialsId: 'userkeyOrch'),
+                    credentials: ExternalApp(
+                            accountForApp: 'myorggxpsdbv', 
+                            applicationId: '4c63e81b-d4c1-45d3-8c43-4cc8aa96ff8e', 
+                            applicationScope: 'OR.Assets OR.BackgroundTasks OR.Execution OR.Folders OR.Jobs OR.Machines.Read OR.Monitoring OR.Robots.Read OR.Settings.Read OR.TestSetExecutions OR.TestSets OR.TestSetSchedules OR.Users.Read', 
+                            applicationSecret: 'Uipathkey', 
+                            identityUrl: 'https://cloud.uipath.com/'), 
+                    folderName: 'Sales',
+                    orchestratorAddress: 'https://cloud.uipath.com/',
+                    orchestratorTenant: 'DefaultTenant',
                     entryPointPaths: 'Main.xaml',
                     environments: '',
-                    folderName: 'sebi',
-                    orchestratorAddress: 'https://cloud.uipath.com/aitraining',
-                    orchestratorTenant: 'UiPathDefault',
+                  
                     packagePath: PROCESS_OUTPUT_PATH,
                     traceLevel: 'Verbose'
                 )
@@ -168,9 +121,9 @@ pipeline {
                      assetsAction: DeployAssets(),
                      credentials: Token(accountName: 'aitraining', credentialsId: 'userkeyOrch'),
                      filePath: ASSETS_FILE_PATH,
-                     folderName: 'sebi',
-                     orchestratorAddress: 'https://cloud.uipath.com/aitraining',
-                     orchestratorTenant: 'UiPathDefault',
+                     folderName: 'Sales',
+                    orchestratorAddress: 'https://cloud.uipath.com/myorggxpsdbv',
+                    orchestratorTenant: 'DefaultTenant',
                      traceLevel: 'None'
                 )
              }
@@ -259,6 +212,6 @@ pipeline {
                             }
                             Write-Output "$(Get-Date -Format \'HH:mm:ss\') - COMPLETED - Queue Configuration"'''
              }
-         }   
+         } */  
      }
  }
